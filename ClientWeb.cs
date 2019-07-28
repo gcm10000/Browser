@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace DecnoBrowser
@@ -87,18 +88,21 @@ namespace DecnoBrowser
         public Document GetResponse()
         {
             string result = client.Receive();
-            List<int> indexes = result.AllIndexesOf("\r\n\r\n").ToList();
-            int separateBody = 0;
-            for (int i = indexes.Count - 1; i  >= 0; i--)
-            {
-                if (result.Substring(indexes[i] + 4) != "")
-                {
-                    separateBody = indexes[i];
-                    break;
-                }
-            }
-            Document document = new Document(result.Substring(0, indexes[0]), result.Substring(separateBody + 4));
+            int separateHeader = result.IndexOf("\r\n\r\n");
+            int endBody = result.LastIndexOf("\r\n0\r\n\r\n");
 
+            string Header = result.Substring(0, separateHeader);
+
+            string Body = result.Substring(separateHeader + 4);
+            int NumberUnknown = Body.IndexOf("\r\n\r\n");
+
+            if (endBody > -1)
+                Body = result.Substring(separateHeader + 4, endBody - (separateHeader + 4));
+
+            if (Int32.TryParse(Body.Substring(0, NumberUnknown), System.Globalization.NumberStyles.HexNumber, null, out _))
+                Body = Body.Substring(NumberUnknown + 2);
+
+            Document document = new Document(Header, Body);
             return document;
         }
 

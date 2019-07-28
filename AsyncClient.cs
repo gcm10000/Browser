@@ -171,7 +171,6 @@ namespace DecnoBrowser
 
                 // Read data from the remote device.  
                 int bytesRead = client.EndReceive(ar);
-
                 if (bytesRead > 0)
                 {
                     // There might be more data, so store the data received so far.  
@@ -182,8 +181,23 @@ namespace DecnoBrowser
                     {
                         aTimer.Stop();
                         Console.WriteLine("Getting data. . .");
-                        Console.WriteLine(state.sb.ToString());
                     }
+                    else
+                    {
+                        if (state.sb.ToString().EndsWith("\r\n0\r\n\r\n"))
+                        {
+                            // All the data has arrived; put it in response.  
+                            if (state.sb.Length > 1)
+                            {
+                                response = state.sb.ToString();
+                            }
+                            // Signal that all bytes have been received.  
+                            receiveDone.Set();
+                        }
+                    }
+
+                    // Show data received
+                    Console.WriteLine(state.sb.ToString());
 
                     // Get the rest of the data.  
                     client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
